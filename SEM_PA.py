@@ -228,8 +228,8 @@ code="""
 callbackx = CustomJS(args=dict(source=source), code=code.format(var="XX"))
 callbacky = CustomJS(args=dict(source=source), code=code.format(var="YY"))
 
-selectX = Select(title="X axis:", value="U", options=ChartAxes, callback=callbackx)
-selectY = Select(title="Y axis:", value="Ce", options=ChartAxes, callback=callbacky)
+selectX = Select(title="X axis:", value="d", options=ChartAxes, callback=callbackx)
+selectY = Select(title="Y axis:", value="A", options=ChartAxes, callback=callbacky)
 
 
 # Hover tooltips (for distribution)
