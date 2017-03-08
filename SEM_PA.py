@@ -64,13 +64,42 @@ for i in range(0,len(columns)):
 for col in range(0,len(columns_def)):
     if(columns_fnd[col]==0):
         columns_val[col]=np.zeros(len(data[:,1]))
+
+# Get field data
+temp = listdir(directory+"\\stub01\\") 
+numFields = 0
+
+for i in range(0,len(temp)):       
+    if(temp[i][:3]=="fld"):
+        numFields+=1
+        #print(int(temp[i][-4:]))
+
+Fields = np.zeros((numFields, 3))
+for i in range(0,len(data[:,0])):
+    temp = int(columns_val[15][i]-10000-1)
+    Fields[temp, 0] = columns_val[10][i]/1000
+    Fields[temp, 1] = columns_val[11][i]/1000
+
+for i in range(0,len(Fields[:,0])):
+    if(Fields[i,0]==0 and Fields[i,1]==0):
+        print("No particles found on field "+str(i))
         
+# Find field size
+with open(directory+"\\stub01\\Stub Summary.txt") as f:
+    for i in range(0,20):
+        line = f.readline().replace("\n", "").split(':')
+        if(line[0].strip()=="Field size (mm)"):
+            temp = line[1].split("x")
+            FieldX = float(temp[0])
+            FieldY = float(temp[1])
+	
 # Prepare bokeh
 useWebGL = False
 TOOLS="crosshair,pan,wheel_zoom,box_zoom,reset,box_select,lasso_select,tap,save,hover"
 POINT_SIZE = 3
 cBLUE = "#005B82"
 cRED = "#D52D12"
+cGray = "#CDCDCD"
 
 # Assign source data
 source = ColumnDataSource(data=dict(
@@ -87,8 +116,8 @@ source = ColumnDataSource(data=dict(
 	Cl=columns_val[9],
 	Ce=columns_val[16],
 	Field=columns_val[15],
-	XX=columns_val[8],
- 	YY=columns_val[16],
+	XX=columns_val[2],
+ 	YY=columns_val[1],
 	))
 s2 = ColumnDataSource(data=dict(x=[], y=[], r=[], d=[], A=[], U=[], O=[], Si=[], C=[], Field=[], ID=[], Ce=[], Cl=[], XX=[], YY=[]))
 hist, edges = np.histogram(columns_val[2], density=True, bins=50)
@@ -96,13 +125,14 @@ ChartAxes = ["d", "A", "U", "C", "O", "Cl", "Ce"]
 
 # Particle distribution
 gDistribution = figure(tools=TOOLS, active_drag="lasso_select", active_scroll="wheel_zoom", title="Particle distribution", x_axis_label='x / mm', y_axis_label='y / mm', webgl=useWebGL)
+gDistribution.rect(x=Fields[:,0], y=Fields[:,1], width=FieldX, height=FieldY, angle=0, line_color=cGray, fill_color=cGray, line_alpha=0.5, fill_alpha=0.25)
 gDistribution.circle('x', 'y', radius='r', source=source, line_color=cBLUE, fill_color=cBLUE, fill_alpha=0.5)
 gDistribution.circle('x', 'y', radius='r', source=s2, line_color=cRED, fill_color=cRED, fill_alpha=0.5)
 gDistribution.select(BoxSelectTool).select_every_mousemove = False
 gDistribution.select(LassoSelectTool).select_every_mousemove = False
 
 # Histogram
-gHist = figure(tools="save", title="Histogram", x_axis_label="d", y_axis_label="N", webgl=useWebGL)
+gHist = figure(tools="save", title="Histogram", x_axis_label="d / um", y_axis_label="N", webgl=useWebGL)
 gHist.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color=cBLUE, line_color=cBLUE, fill_alpha=0.25)
 
 # Graph with variable axis
@@ -198,8 +228,8 @@ code="""
 callbackx = CustomJS(args=dict(source=source), code=code.format(var="XX"))
 callbacky = CustomJS(args=dict(source=source), code=code.format(var="YY"))
 
-selectX = Select(title="X axis:", value="U", options=ChartAxes, callback=callbackx)
-selectY = Select(title="Y axis:", value="Ce", options=ChartAxes, callback=callbacky)
+selectX = Select(title="X axis:", value="d", options=ChartAxes, callback=callbackx)
+selectY = Select(title="Y axis:", value="A", options=ChartAxes, callback=callbacky)
 
 
 # Hover tooltips (for distribution)
